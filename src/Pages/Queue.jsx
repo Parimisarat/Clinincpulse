@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabaseClient";
 
 export default function Queue() {
 
@@ -7,9 +8,26 @@ export default function Queue() {
 
   const loadTokens = async () => {
     try {
-      const response = await fetch("http://localhost:8082/api/tokens/today");
-      const data = await response.json();
-      setTokens(data);
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('tokens')
+        .select('*')
+        .gte('created_at', today)
+        .order('token_number', { ascending: true });
+
+      if (error) throw error;
+
+      // Map Supabase snake_case to component camelCase if needed, 
+      // or update the component to use snake_case
+      const mappedData = data.map(t => ({
+        id: t.id,
+        tokenNumber: t.token_number,
+        patientName: t.patient_name,
+        patientPhone: t.patient_phone,
+        status: t.status
+      }));
+
+      setTokens(mappedData);
     } catch (error) {
       console.error("Error fetching tokens:", error);
     } finally {
@@ -25,9 +43,12 @@ export default function Queue() {
     if (!window.confirm("Mark this token as completed?")) return;
 
     try {
-      await fetch(`http://localhost:8082/api/tokens/${id}/complete`, {
-        method: "PUT"
-      });
+      const { error } = await supabase
+        .from('tokens')
+        .update({ status: 'COMPLETED' })
+        .eq('id', id);
+
+      if (error) throw error;
       loadTokens();
     } catch (error) {
       console.error("Error updating token:", error);

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabaseClient";
 
 export default function GenerateToken() {
 
@@ -10,9 +11,13 @@ export default function GenerateToken() {
   });
 
   useEffect(() => {
-    fetch("http://localhost:8082/api/doctors")
-      .then(res => res.json())
-      .then(data => setDoctors(data));
+    const fetchDoctors = async () => {
+      const { data, error } = await supabase
+        .from('doctors')
+        .select('*');
+      if (!error) setDoctors(data);
+    };
+    fetchDoctors();
   }, []);
 
   const handleChange = (e) => {
@@ -25,19 +30,31 @@ export default function GenerateToken() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const response = await fetch("http://localhost:8082/api/tokens", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(form)
-    });
+    // Get today's count to generate token number
+    const today = new Date().toISOString().split('T')[0];
+    const { count, error: countError } = await supabase
+      .from('tokens')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', today);
 
-    if (response.ok) {
-      alert("Token generated successfully 🎟️");
+    const tokenNumber = (count || 0) + 1;
+
+    const { error } = await supabase
+      .from('tokens')
+      .insert([{
+        doctor_id: form.doctorId,
+        patient_name: form.patientName,
+        patient_phone: form.patientPhone,
+        token_number: tokenNumber,
+        status: 'ACTIVE'
+      }]);
+
+    if (!error) {
+      alert(`Token generated successfully! Your Token Number is: ${tokenNumber} 🎟️`);
       setForm({ doctorId: "", patientName: "", patientPhone: "" });
     } else {
-      alert("Error generating token ❌");
+      console.error("Error generating token:", error);
+      alert(`Error generating token ❌: ${error.message}`);
     }
   };
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { FaUserMd, FaClock, FaCheckCircle, FaTicketAlt } from "react-icons/fa";
+import { supabase } from "../lib/supabaseClient";
 
 export default function Dashboard() {
 
@@ -11,9 +12,43 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    fetch("http://localhost:8082/api/dashboard")
-      .then(res => res.json())
-      .then(data => setStats(data));
+    const fetchStats = async () => {
+      const today = new Date().toISOString().split('T')[0];
+
+      // 1. Total Doctors
+      const { count: doctorCount } = await supabase
+        .from('doctors')
+        .select('*', { count: 'exact', head: true });
+
+      // 2. Active Tokens Today
+      const { count: activeCount } = await supabase
+        .from('tokens')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'ACTIVE')
+        .gte('created_at', today);
+
+      // 3. Completed Tokens Today
+      const { count: completedCount } = await supabase
+        .from('tokens')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'COMPLETED')
+        .gte('created_at', today);
+
+      // 4. Total Tokens Today
+      const { count: totalCount } = await supabase
+        .from('tokens')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', today);
+
+      setStats({
+        doctors: doctorCount || 0,
+        active: activeCount || 0,
+        completed: completedCount || 0,
+        total: totalCount || 0
+      });
+    };
+
+    fetchStats();
   }, []);
 
   return (
@@ -23,28 +58,28 @@ export default function Dashboard() {
 
       <div className="cards">
 
-        <Card 
+        <Card
           title="Doctors"
           value={stats.doctors}
           icon={<FaUserMd />}
           color="blue"
         />
 
-        <Card 
+        <Card
           title="Active Tokens"
           value={stats.active}
           icon={<FaClock />}
           color="yellow"
         />
 
-        <Card 
+        <Card
           title="Completed Today"
           value={stats.completed}
           icon={<FaCheckCircle />}
           color="green"
         />
 
-        <Card 
+        <Card
           title="Total Today"
           value={stats.total}
           icon={<FaTicketAlt />}

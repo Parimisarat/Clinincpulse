@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "../lib/supabaseClient";
 
 export default function AddDoctor() {
 
@@ -17,19 +18,16 @@ export default function AddDoctor() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const response = await fetch("http://localhost:8082/api/doctors", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(doctor)
-    });
+    const { data, error } = await supabase
+      .from('doctors')
+      .insert([doctor]);
 
-    if (response.ok) {
+    if (!error) {
       alert("Doctor added successfully ✅");
       setDoctor({ name: "", specialization: "" });
     } else {
-      alert("Something went wrong ❌");
+      console.error("Error adding doctor:", error);
+      alert(`Something went wrong ❌: ${error.message}`);
     }
   };
 
