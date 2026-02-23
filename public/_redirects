@@ -1,0 +1,6 @@
+/*
+  This redirect rule ensures that all frontend routes (like /add-doctor, /queue) 
+  are handled by our main index.html file. 
+  Without this, refreshing the page on Netlify would result in a 404 error.
+*/
+/*  /index.html  200

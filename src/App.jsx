@@ -1,10 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, NavLink } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { FaHospital } from "react-icons/fa";
-import Dashboard from "./pages/Dashboard";
-import AddDoctor from "./pages/AddDoctor";
-import GenerateToken from "./pages/GenerateToken";
-import Queue from "./pages/Queue";
+import Dashboard from "./Pages/Dashboard";
+import AddDoctor from "./Pages/AddDoctor";
+import GenerateToken from "./Pages/GenerateToken";
+import Queue from "./Pages/Queue";
 import "./index.css";
 
 export default function App() {
